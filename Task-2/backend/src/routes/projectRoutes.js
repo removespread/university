@@ -10,6 +10,12 @@ const router = express.Router();
 
 const projectController = require('../controllers/projectController');
 const taskController = require('../controllers/taskController');
+const { optionalAuthenticate } = require('../middleware/auth');
+
+// Мягкая аутентификация: если передан валидный JWT, req.user заполняется,
+// и создаваемые проекты/задачи привязываются к пользователю. Без токена
+// маршруты остаются доступными (обратная совместимость с базовой версией).
+router.use(optionalAuthenticate);
 
 // ---- Проекты (FR-3) ----
 router.post('/', projectController.createProject);

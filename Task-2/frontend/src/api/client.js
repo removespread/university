@@ -21,6 +21,13 @@ api.interceptors.request.use((config) => {
   return config;
 });
 
+// ---- Методы аутентификации (FR-1, FR-2) ----
+export const authApi = {
+  register: (data) => api.post('/auth/register', data).then((r) => r.data),
+  login: (data) => api.post('/auth/login', data).then((r) => r.data),
+  me: () => api.get('/auth/me').then((r) => r.data),
+};
+
 // ---- Методы работы с проектами ----
 export const projectsApi = {
   list: () => api.get('/projects').then((r) => r.data),

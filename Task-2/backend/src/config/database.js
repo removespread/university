@@ -32,14 +32,20 @@ if (dialect === 'postgres') {
   );
 } else {
   // SQLite для локальной разработки: файл создаётся автоматически.
-  const storage = process.env.DB_STORAGE
+  // Особый случай — ':memory:' (in-memory БД для тестов): путь не резолвим.
+  const isMemory = process.env.DB_STORAGE === ':memory:';
+  const storage = isMemory
+    ? ':memory:'
+    : process.env.DB_STORAGE
     ? path.resolve(process.cwd(), process.env.DB_STORAGE)
     : path.resolve(process.cwd(), 'data', 'taskflow.sqlite');
 
-  // Гарантируем существование директории для файла БД.
-  const dir = path.dirname(storage);
-  if (!fs.existsSync(dir)) {
-    fs.mkdirSync(dir, { recursive: true });
+  // Для файловой БД гарантируем существование директории.
+  if (!isMemory) {
+    const dir = path.dirname(storage);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
   }
 
   sequelize = new Sequelize({
