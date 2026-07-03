@@ -11,8 +11,7 @@ require('dotenv').config();
 
 const app = require('./app');
 const { sequelize } = require('./models');
-
-const PORT = process.env.PORT || 4000;
+const { port: PORT } = require('./config/env');
 
 /**
  * Инициализация БД и запуск сервера.

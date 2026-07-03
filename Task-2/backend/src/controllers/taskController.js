@@ -8,12 +8,46 @@
 const { Project, Task } = require('../models');
 
 /**
- * Проверяет, существует ли проект с указанным id.
- * @param {string} projectId идентификатор проекта
- * @returns {Promise<Project|null>}
+ * Формирует стандартный ответ «ресурс не найден».
+ * @param {import('express').Response} res
+ * @param {string} message человекочитаемое сообщение
  */
-async function findProjectOr404(projectId) {
-  return Project.findByPk(projectId);
+function respondNotFound(res, message) {
+  return res.status(404).json({ error: { code: 'NOT_FOUND', message } });
+}
+
+/**
+ * Формирует стандартный ответ об ошибке валидации.
+ * @param {import('express').Response} res
+ * @param {string} message человекочитаемое сообщение
+ */
+function respondValidationError(res, message) {
+  return res.status(400).json({ error: { code: 'VALIDATION_ERROR', message } });
+}
+
+/**
+ * Находит задачу, принадлежащую указанному проекту.
+ * @param {string} projectId идентификатор проекта
+ * @param {string} taskId идентификатор задачи
+ * @returns {Promise<Task|null>}
+ */
+async function findTaskInProject(projectId, taskId) {
+  return Task.findOne({ where: { id: taskId, projectId } });
+}
+
+/**
+ * Проверяет корректность приоритета и статуса задачи.
+ * @param {{priority?: string, status?: string}} param0 проверяемые поля
+ * @returns {string|null} текст ошибки или null, если всё корректно
+ */
+function validatePriorityAndStatus({ priority, status }) {
+  if (priority && !Task.PRIORITIES.includes(priority)) {
+    return `Недопустимый приоритет. Разрешено: ${Task.PRIORITIES.join(', ')}`;
+  }
+  if (status && !Task.STATUSES.includes(status)) {
+    return `Недопустимый статус. Разрешено: ${Task.STATUSES.join(', ')}`;
+  }
+  return null;
 }
 
 /**
@@ -22,37 +56,20 @@ async function findProjectOr404(projectId) {
  */
 async function createTask(req, res, next) {
   try {
-    const project = await findProjectOr404(req.params.projectId);
+    const project = await Project.findByPk(req.params.projectId);
     if (!project) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Проект не найден' },
-      });
+      return respondNotFound(res, 'Проект не найден');
     }
 
     const { title, description, priority, status, dueDate } = req.body;
 
     if (!title || !title.trim()) {
-      return res.status(400).json({
-        error: { code: 'VALIDATION_ERROR', message: 'Поле "title" обязательно' },
-      });
+      return respondValidationError(res, 'Поле "title" обязательно');
     }
 
-    if (priority && !Task.PRIORITIES.includes(priority)) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: `Недопустимый приоритет. Разрешено: ${Task.PRIORITIES.join(', ')}`,
-        },
-      });
-    }
-
-    if (status && !Task.STATUSES.includes(status)) {
-      return res.status(400).json({
-        error: {
-          code: 'VALIDATION_ERROR',
-          message: `Недопустимый статус. Разрешено: ${Task.STATUSES.join(', ')}`,
-        },
-      });
+    const validationError = validatePriorityAndStatus({ priority, status });
+    if (validationError) {
+      return respondValidationError(res, validationError);
     }
 
     const task = await Task.create({
@@ -77,11 +94,9 @@ async function createTask(req, res, next) {
  */
 async function getTasks(req, res, next) {
   try {
-    const project = await findProjectOr404(req.params.projectId);
+    const project = await Project.findByPk(req.params.projectId);
     if (!project) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Проект не найден' },
-      });
+      return respondNotFound(res, 'Проект не найден');
     }
 
     const where = { projectId: project.id };
@@ -105,27 +120,17 @@ async function getTasks(req, res, next) {
  */
 async function updateTask(req, res, next) {
   try {
-    const task = await Task.findOne({
-      where: { id: req.params.taskId, projectId: req.params.projectId },
-    });
+    const task = await findTaskInProject(req.params.projectId, req.params.taskId);
 
     if (!task) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Задача не найдена' },
-      });
+      return respondNotFound(res, 'Задача не найдена');
     }
 
     const { title, description, priority, status, dueDate } = req.body;
 
-    if (priority && !Task.PRIORITIES.includes(priority)) {
-      return res.status(400).json({
-        error: { code: 'VALIDATION_ERROR', message: 'Недопустимый приоритет' },
-      });
-    }
-    if (status && !Task.STATUSES.includes(status)) {
-      return res.status(400).json({
-        error: { code: 'VALIDATION_ERROR', message: 'Недопустимый статус' },
-      });
+    const validationError = validatePriorityAndStatus({ priority, status });
+    if (validationError) {
+      return respondValidationError(res, validationError);
     }
 
     await task.update({
@@ -155,14 +160,10 @@ async function updateTask(req, res, next) {
  */
 async function deleteTask(req, res, next) {
   try {
-    const task = await Task.findOne({
-      where: { id: req.params.taskId, projectId: req.params.projectId },
-    });
+    const task = await findTaskInProject(req.params.projectId, req.params.taskId);
 
     if (!task) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Задача не найдена' },
-      });
+      return respondNotFound(res, 'Задача не найдена');
     }
 
     await task.destroy();
@@ -178,14 +179,10 @@ async function deleteTask(req, res, next) {
  */
 async function completeTask(req, res, next) {
   try {
-    const task = await Task.findOne({
-      where: { id: req.params.taskId, projectId: req.params.projectId },
-    });
+    const task = await findTaskInProject(req.params.projectId, req.params.taskId);
 
     if (!task) {
-      return res.status(404).json({
-        error: { code: 'NOT_FOUND', message: 'Задача не найдена' },
-      });
+      return respondNotFound(res, 'Задача не найдена');
     }
 
     await task.update({ status: 'done', completedAt: new Date() });

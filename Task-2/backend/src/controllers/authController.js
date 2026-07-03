@@ -7,6 +7,7 @@
 
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
+const { jwtSecret, jwtExpiresIn } = require('../config/env');
 
 /**
  * Генерирует JWT для пользователя.
@@ -14,10 +15,12 @@ const { User } = require('../models');
  * @returns {string} подписанный токен
  */
 function generateToken(user) {
-  const secret = process.env.JWT_SECRET || 'change_me_in_production';
-  const expiresIn = process.env.JWT_EXPIRES_IN || '7d';
+  // Секрет и срок жизни берём из централизованной конфигурации (config/env.js),
+  // которая гарантирует безопасное значение секрета в production.
   // sub — стандартное поле JWT для идентификатора субъекта.
-  return jwt.sign({ sub: user.id, email: user.email }, secret, { expiresIn });
+  return jwt.sign({ sub: user.id, email: user.email }, jwtSecret, {
+    expiresIn: jwtExpiresIn,
+  });
 }
 
 /**

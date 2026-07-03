@@ -9,6 +9,7 @@
  */
 
 const jwt = require('jsonwebtoken');
+const { jwtSecret } = require('../config/env');
 
 /**
  * Извлекает JWT из заголовка Authorization.
@@ -35,8 +36,7 @@ function authenticate(req, res, next) {
   }
 
   try {
-    const secret = process.env.JWT_SECRET || 'change_me_in_production';
-    const payload = jwt.verify(token, secret);
+    const payload = jwt.verify(token, jwtSecret);
     // Сохраняем полезную нагрузку токена для использования в контроллерах.
     req.user = { id: payload.sub, email: payload.email };
     return next();
@@ -56,8 +56,7 @@ function optionalAuthenticate(req, res, next) {
   if (!token) return next();
 
   try {
-    const secret = process.env.JWT_SECRET || 'change_me_in_production';
-    const payload = jwt.verify(token, secret);
+    const payload = jwt.verify(token, jwtSecret);
     req.user = { id: payload.sub, email: payload.email };
   } catch (e) {
     // Игнорируем ошибку — маршрут доступен и без авторизации.
