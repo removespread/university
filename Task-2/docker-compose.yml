@@ -1,0 +1,59 @@
+# Docker Compose для локального запуска TaskFlow с PostgreSQL.
+#
+# По умолчанию backend использует SQLite (не требует внешних сервисов).
+# Данный файл поднимает PostgreSQL для сценария, приближённого к продакшену
+# (см. Task-1/ОБОСНОВАНИЕ_ТЕХНОЛОГИЙ.md).
+#
+# Запуск только БД:        docker compose up -d db
+# Запуск БД + backend:     docker compose up -d db backend
+#
+# Чтобы backend работал с PostgreSQL, укажите в окружении DB_DIALECT=postgres.
+
+version: '3.8'
+
+services:
+  # ---- База данных PostgreSQL ----
+  db:
+    image: postgres:16-alpine
+    container_name: taskflow_db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: taskflow_db
+      POSTGRES_USER: taskflow_app
+      POSTGRES_PASSWORD: secure_password
+    ports:
+      - '5432:5432'
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U taskflow_app -d taskflow_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ---- Backend API (Node.js + Express) ----
+  backend:
+    build:
+      context: ./backend
+    container_name: taskflow_backend
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      NODE_ENV: production
+      PORT: 4000
+      CLIENT_URL: http://localhost:5173
+      DB_DIALECT: postgres
+      DB_HOST: db
+      DB_PORT: 5432
+      DB_NAME: taskflow_db
+      DB_USER: taskflow_app
+      DB_PASSWORD: secure_password
+      JWT_SECRET: change_me_in_production
+      JWT_EXPIRES_IN: 7d
+    ports:
+      - '4000:4000'
+
+volumes:
+  pgdata:

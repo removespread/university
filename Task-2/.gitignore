@@ -1,0 +1,46 @@
+# ---------- Node ----------
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+.pnpm-store/
+
+# ---------- Переменные окружения ----------
+.env
+.env.local
+.env.*.local
+*.env
+
+# ---------- Логи ----------
+logs/
+*.log
+
+# ---------- Сборка Frontend (Vite/React) ----------
+frontend/dist/
+frontend/.vite/
+frontend/build/
+.cache/
+
+# ---------- База данных (локальный SQLite для разработки) ----------
+*.sqlite
+*.sqlite3
+*.db
+backend/data/
+
+# ---------- Тесты и покрытие ----------
+coverage/
+.nyc_output/
+
+# ---------- IDE и ОС ----------
+.vscode/
+.idea/
+*.swp
+.DS_Store
+Thumbs.db
+
+# ---------- Прочее ----------
+tmp/
+temp/
+dist/
+*.tgz
