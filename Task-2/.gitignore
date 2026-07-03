@@ -27,6 +27,9 @@ frontend/build/
 *.sqlite3
 *.db
 backend/data/
+# Артефакт in-memory SQLite, иногда создаётся драйвером при тестах
+:memory:
+backend/:memory:
 
 # ---------- Тесты и покрытие ----------
 coverage/
