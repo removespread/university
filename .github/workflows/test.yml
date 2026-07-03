@@ -1,0 +1,50 @@
+# Автоматический запуск тестов TaskFlow.
+# Тестовый набор находится в Task-3, но использует исходный код и зависимости
+# backend из Task-2/backend (см. Task-3/jest.config.js и tests/helpers/appPaths.js),
+# поэтому зависимости устанавливаются в обоих каталогах.
+name: Tests
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  test:
+    name: Unit & Integration tests
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [18.x, 20.x]
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install backend dependencies (Task-2)
+        working-directory: Task-2/backend
+        run: npm install
+
+      - name: Install test-suite dependencies (Task-3)
+        working-directory: Task-3
+        run: npm install
+
+      - name: Run tests with coverage
+        working-directory: Task-3
+        run: npm run test:coverage
+
+      - name: Upload coverage report
+        if: always() && matrix.node-version == '20.x'
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: Task-3/coverage/
+          retention-days: 7

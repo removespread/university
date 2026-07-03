@@ -1,0 +1,62 @@
+# Автоматическая сборка проекта TaskFlow.
+# Собираются оба приложения monorepo:
+#   * frontend (Task-2/frontend) — production-бандл Vite;
+#   * backend  (Task-2/backend)  — Docker-образ на основе Dockerfile.
+name: Build
+
+on:
+  push:
+    branches: ['**']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-frontend:
+    name: Build frontend (Vite)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+
+      - name: Install frontend dependencies
+        working-directory: Task-2/frontend
+        run: npm install
+
+      - name: Build production bundle
+        working-directory: Task-2/frontend
+        run: npm run build
+
+      - name: Upload build artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: frontend-dist
+          path: Task-2/frontend/dist/
+          retention-days: 7
+
+  build-backend:
+    name: Build backend (Docker image)
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build backend Docker image
+        uses: docker/build-push-action@v6
+        with:
+          context: Task-2/backend
+          file: Task-2/backend/Dockerfile
+          push: false
+          tags: taskflow-backend:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
