@@ -1,0 +1,12 @@
+# Зависимости
+node_modules/
+
+# Отчёты о покрытии (генерируются командой npm run test:coverage)
+coverage/
+
+# Временные файлы вывода
+test-output.txt
+*.log
+
+# Системные файлы
+.DS_Store

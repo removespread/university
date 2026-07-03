@@ -1,0 +1,25 @@
+{
+  "name": "taskflow-tests",
+  "version": "1.0.0",
+  "description": "Комплексное тестирование backend TaskFlow (Task-2): модульные и интеграционные тесты + покрытие",
+  "private": true,
+  "scripts": {
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch --runInBand",
+    "test:coverage": "jest --runInBand --coverage",
+    "test:unit": "jest --runInBand tests/unit",
+    "test:integration": "jest --runInBand tests/integration"
+  },
+  "keywords": [
+    "taskflow",
+    "jest",
+    "supertest",
+    "testing"
+  ],
+  "author": "TaskFlow Team",
+  "license": "MIT",
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^7.0.0"
+  }
+}
