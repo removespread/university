@@ -8,7 +8,11 @@
  */
 
 const { DataTypes, Model } = require('sequelize');
+const bcrypt = require('bcryptjs');
 const sequelize = require('../config/database');
+
+// Число раундов хеширования bcrypt (баланс безопасности и скорости).
+const SALT_ROUNDS = 10;
 
 class User extends Model {
   /**
@@ -25,6 +29,25 @@ class User extends Model {
       createdAt: this.createdAt,
       updatedAt: this.updatedAt,
     };
+  }
+
+  /**
+   * Хеширует переданный пароль и сохраняет его в поле passwordHash.
+   * @param {string} password пароль в открытом виде
+   * @returns {Promise<void>}
+   */
+  async setPassword(password) {
+    this.passwordHash = await bcrypt.hash(password, SALT_ROUNDS);
+  }
+
+  /**
+   * Проверяет, соответствует ли переданный пароль сохранённому хешу.
+   * @param {string} password пароль в открытом виде
+   * @returns {Promise<boolean>}
+   */
+  async verifyPassword(password) {
+    if (!this.passwordHash) return false;
+    return bcrypt.compare(password, this.passwordHash);
   }
 }
 

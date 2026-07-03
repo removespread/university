@@ -164,3 +164,13 @@ label {
   font-size: 13px;
   margin-bottom: 12px;
 }
+
+/* ---- Страницы авторизации ---- */
+.auth-wrap {
+  max-width: 380px;
+  margin: 40px auto 0;
+}
+
+.auth-wrap h1 {
+  margin-top: 0;
+}
